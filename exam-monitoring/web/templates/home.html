@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Exam Monitoring AI</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+
+            font-family: Arial, sans-serif;
+
+            background: #f4f6f8;
+
+            color: #222;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+
+            margin: auto;
+        }
+
+        .header {
+            display: flex;
+
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+        }
+
+        button {
+            border: none;
+
+            padding: 10px 18px;
+
+            border-radius: 6px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+        }
+
+        #startButton {
+            background: #198754;
+            color: white;
+        }
+
+        #stopButton {
+            background: #dc3545;
+            color: white;
+        }
+
+        #logoutButton {
+            background: #6c757d;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card {
+            background: white;
+
+            border-radius: 10px;
+
+            padding: 20px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 2px 10px
+                rgba(0, 0, 0, 0.08);
+        }
+
+        .video-container {
+            width: 100%;
+
+            background: #111;
+
+            border-radius: 8px;
+
+            overflow: hidden;
+
+            margin-top: 20px;
+        }
+
+        #video {
+            display: block;
+
+            width: 100%;
+
+            max-height: 600px;
+
+            object-fit: contain;
+        }
+
+        .status-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(150px, 1fr)
+                );
+
+            gap: 15px;
+
+            margin-top: 20px;
+        }
+
+        .status-box {
+            background: #f1f3f5;
+
+            padding: 15px;
+
+            border-radius: 8px;
+        }
+
+        .status-label {
+            font-size: 13px;
+
+            color: #666;
+
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 17px;
+
+            font-weight: bold;
+        }
+
+        .system-status {
+            margin-top: 15px;
+
+            padding: 10px 15px;
+
+            background: #e9ecef;
+
+            border-radius: 6px;
+
+            font-size: 14px;
+        }
+
+        .log-title {
+            margin-top: 0;
+        }
+
+        #eventLog {
+            max-height: 400px;
+
+            overflow-y: auto;
+        }
+
+        .empty-log {
+            color: #777;
+
+            padding: 20px;
+
+            text-align: center;
+        }
+
+        .event {
+            border-left:
+                4px solid #dc3545;
+
+            background: #fff5f5;
+
+            padding: 12px 15px;
+
+            margin-bottom: 10px;
+
+            border-radius: 5px;
+        }
+
+        .event-title {
+            font-weight: bold;
+
+            color: #c92a2a;
+
+            font-size: 16px;
+        }
+
+        .event-info {
+            margin-top: 5px;
+
+            font-size: 13px;
+
+            color: #555;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ================================= -->
+    <!-- HEADER -->
+    <!-- ================================= -->
+
+    <div class="header">
+
+        <div>
+
+            <h1>
+                Exam Monitoring AI
+            </h1>
+
+            <p>
+                Xin chào,
+                <strong>
+                    {{ username }}
+                </strong>
+            </p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <button
+                id="logoutButton"
+                onclick="
+                    window.location.href =
+                    '{{ url_for('logout') }}'
+                "
+            >
+                Đăng xuất
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- MONITOR CARD -->
+    <!-- ================================= -->
+
+    <div class="card">
+
+        <button
+            id="startButton"
+        >
+            Bật webcam
+        </button>
+
+
+        <button
+            id="stopButton"
+            disabled
+        >
+            Tắt webcam
+        </button>
+
+
+        <!-- SYSTEM STATUS -->
+
+        <div
+            id="systemStatus"
+            class="system-status"
+        >
+            Trạng thái:
+            Chưa bắt đầu giám sát.
+        </div>
+
+
+        <!-- VIDEO -->
+
+        <div class="video-container">
+
+            <video
+                id="video"
+                autoplay
+                muted
+                playsinline
+            ></video>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- AI STATUS -->
+        <!-- ================================= -->
+
+        <div class="status-grid">
+
+
+            <div class="status-box">
+
+                <div class="status-label">
+                    Khuôn mặt
+                </div>
+
+                <div
+                    id="faceStatus"
+                    class="status-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-label">
+                    Danh tính
+                </div>
+
+                <div
+                    id="identityStatus"
+                    class="status-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-label">
+                    Similarity
+                </div>
+
+                <div
+                    id="similarityStatus"
+                    class="status-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <div class="status-label">
+                    Pose
+                </div>
+
+                <div
+                    id="poseStatus"
+                    class="status-value"
+                >
+                    -
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- EVENT LOG -->
+    <!-- ================================= -->
+
+    <div class="card">
+
+        <h2 class="log-title">
+            Nhật ký hành vi nghi vấn
+        </h2>
+
+
+        <div id="eventLog">
+
+            <div class="empty-log">
+                Chưa phát hiện hành vi nghi vấn.
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+// =========================================
+// ELEMENTS
+// =========================================
+
+const video =
+    document.getElementById(
+        "video"
+    );
+
+
+const startButton =
+    document.getElementById(
+        "startButton"
+    );
+
+
+const stopButton =
+    document.getElementById(
+        "stopButton"
+    );
+
+
+const systemStatus =
+    document.getElementById(
+        "systemStatus"
+    );
+
+
+const faceStatus =
+    document.getElementById(
+        "faceStatus"
+    );
+
+
+const identityStatus =
+    document.getElementById(
+        "identityStatus"
+    );
+
+
+const similarityStatus =
+    document.getElementById(
+        "similarityStatus"
+    );
+
+
+const poseStatus =
+    document.getElementById(
+        "poseStatus"
+    );
+
+
+const eventLog =
+    document.getElementById(
+        "eventLog"
+    );
+
+
+// =========================================
+// VARIABLES
+// =========================================
+
+let stream = null;
+
+let monitoring = false;
+
+let frameTimer = null;
+
+let canvas = null;
+
+
+// =========================================
+// SET SYSTEM STATUS
+// =========================================
+
+function setSystemStatus(
+    message
+) {
+
+    systemStatus.textContent =
+        "Trạng thái: "
+        + message;
+
+}
+
+
+// =========================================
+// FORMAT TIME
+// =========================================
+
+function formatTime(
+    timestamp
+) {
+
+    const date =
+        new Date(
+            timestamp * 1000
+        );
+
+
+    return date.toLocaleTimeString(
+        "vi-VN"
+    );
+
+}
+
+
+// =========================================
+// UPDATE AI STATUS
+// =========================================
+
+function updateStatus(
+    status
+) {
+
+    if (!status) {
+        return;
+    }
+
+
+    faceStatus.textContent =
+        status.face || "-";
+
+
+    identityStatus.textContent =
+        status.identity || "-";
+
+
+    if (
+        status.similarity !== null
+        &&
+        status.similarity !== undefined
+    ) {
+
+        similarityStatus.textContent =
+            Number(
+                status.similarity
+            ).toFixed(3);
+
+    } else {
+
+        similarityStatus.textContent =
+            "-";
+
+    }
+
+
+    poseStatus.textContent =
+        status.pose || "-";
+
+}
+
+
+// =========================================
+// ADD EVENT LOG
+// =========================================
+
+function addEvent(
+    event
+) {
+
+    const emptyLog =
+        eventLog.querySelector(
+            ".empty-log"
+        );
+
+
+    if (emptyLog) {
+        emptyLog.remove();
+    }
+
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "event";
+
+
+    element.innerHTML = `
+
+        <div class="event-title">
+            ${event.behavior}
+        </div>
+
+        <div class="event-info">
+            Bắt đầu:
+            ${formatTime(
+                event.start_time
+            )}
+        </div>
+
+        <div class="event-info">
+            Kết thúc:
+            ${formatTime(
+                event.end_time
+            )}
+        </div>
+
+        <div class="event-info">
+            Thời gian:
+            <strong>
+                ${event.duration}
+                giây
+            </strong>
+        </div>
+
+    `;
+
+
+    eventLog.prepend(
+        element
+    );
+
+}
+
+
+// =========================================
+// CAPTURE FRAME
+// =========================================
+
+async function captureFrame() {
+
+    if (!monitoring) {
+        return;
+    }
+
+
+    if (
+        video.videoWidth === 0
+        ||
+        video.videoHeight === 0
+    ) {
+
+        console.log(
+            "[WEB] Video chưa sẵn sàng."
+        );
+
+        return;
+
+    }
+
+
+    // -------------------------------------
+    // CREATE CANVAS
+    // -------------------------------------
+
+    if (!canvas) {
+
+        canvas =
+            document.createElement(
+                "canvas"
+            );
+
+    }
+
+
+    canvas.width =
+        video.videoWidth;
+
+
+    canvas.height =
+        video.videoHeight;
+
+
+    const context =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    // -------------------------------------
+    // CONVERT TO JPEG
+    // -------------------------------------
+
+    const blob =
+        await new Promise(
+            resolve => {
+
+                canvas.toBlob(
+                    resolve,
+                    "image/jpeg",
+                    0.75
+                );
+
+            }
+        );
+
+
+    if (!blob) {
+
+        console.error(
+            "[WEB] Không tạo được frame."
+        );
+
+        return;
+
+    }
+
+
+    // -------------------------------------
+    // FORM DATA
+    // -------------------------------------
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "frame",
+        blob,
+        "frame.jpg"
+    );
+
+
+    // -------------------------------------
+    // SEND TO FLASK
+    // -------------------------------------
+
+    try {
+
+        console.log(
+            "[WEB] Sending frame..."
+        );
+
+
+        const response =
+            await fetch(
+                "/api/monitor/frame",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        console.log(
+            "[WEB] Response:",
+            response.status
+        );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "[WEB] AI result:",
+            data
+        );
+
+
+        if (!response.ok) {
+
+            setSystemStatus(
+                data.message
+                ||
+                "Backend trả về lỗi."
+            );
+
+            return;
+
+        }
+
+
+        if (!data.success) {
+
+            setSystemStatus(
+                data.message
+            );
+
+            return;
+
+        }
+
+
+        // ---------------------------------
+        // UPDATE STATUS
+        // ---------------------------------
+
+        updateStatus(
+            data.status
+        );
+
+
+        setSystemStatus(
+            "AI đang phân tích webcam."
+        );
+
+
+        // ---------------------------------
+        // EVENTS
+        // ---------------------------------
+
+        if (
+            data.events
+            &&
+            data.events.length > 0
+        ) {
+
+            console.log(
+                "[WEB] Suspicious events:",
+                data.events
+            );
+
+
+            data.events.forEach(
+                event => {
+
+                    addEvent(
+                        event
+                    );
+
+                }
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "[WEB] Frame error:",
+            error
+        );
+
+
+        setSystemStatus(
+            "Không thể kết nối backend."
+        );
+
+    }
+
+}
+
+
+// =========================================
+// START MONITORING
+// =========================================
+
+async function startMonitoring() {
+
+    try {
+
+        setSystemStatus(
+            "Đang mở webcam..."
+        );
+
+
+        // =================================
+        // 1. OPEN CAMERA
+        // =================================
+
+        stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video: true,
+
+                    audio: false
+
+                });
+
+
+        video.srcObject =
+            stream;
+
+
+        // =================================
+        // 2. START BACKEND SESSION
+        // =================================
+
+        setSystemStatus(
+            "Đang khởi tạo AI..."
+        );
+
+
+        const response =
+            await fetch(
+                "/api/monitor/start",
+                {
+                    method: "POST"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "[WEB] Start monitoring:",
+            data
+        );
+
+
+        if (
+            !response.ok
+            ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.message
+                ||
+                "Không thể bắt đầu monitoring."
+            );
+
+        }
+
+
+        // =================================
+        // 3. ENABLE MONITORING
+        // =================================
+
+        monitoring = true;
+
+
+        startButton.disabled =
+            true;
+
+
+        stopButton.disabled =
+            false;
+
+
+        setSystemStatus(
+            "Đang giám sát."
+        );
+
+
+        // =================================
+        // 4. SEND FRAME EVERY 500ms
+        // =================================
+
+        frameTimer =
+            setInterval(
+                captureFrame,
+                500
+            );
+
+
+        // Gửi frame đầu tiên ngay lập tức
+
+        await captureFrame();
+
+
+    } catch (error) {
+
+        console.error(
+            "[WEB] Start error:",
+            error
+        );
+
+
+        alert(
+            error.message
+        );
+
+
+        await stopMonitoring();
+
+    }
+
+}
+
+
+// =========================================
+// STOP MONITORING
+// =========================================
+
+async function stopMonitoring() {
+
+    monitoring = false;
+
+
+    // -------------------------------------
+    // STOP TIMER
+    // -------------------------------------
+
+    if (frameTimer !== null) {
+
+        clearInterval(
+            frameTimer
+        );
+
+        frameTimer = null;
+
+    }
+
+
+    // -------------------------------------
+    // STOP BACKEND
+    // -------------------------------------
+
+    try {
+
+        await fetch(
+            "/api/monitor/stop",
+            {
+                method: "POST"
+            }
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[WEB] Stop API error:",
+            error
+        );
+
+    }
+
+
+    // -------------------------------------
+    // STOP CAMERA
+    // -------------------------------------
+
+    if (stream) {
+
+        stream
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+        stream = null;
+
+    }
+
+
+    video.srcObject =
+        null;
+
+
+    // -------------------------------------
+    // RESET BUTTONS
+    // -------------------------------------
+
+    startButton.disabled =
+        false;
+
+
+    stopButton.disabled =
+        true;
+
+
+    // -------------------------------------
+    // RESET STATUS
+    // -------------------------------------
+
+    setSystemStatus(
+        "Đã dừng giám sát."
+    );
+
+
+    faceStatus.textContent =
+        "-";
+
+
+    identityStatus.textContent =
+        "-";
+
+
+    similarityStatus.textContent =
+        "-";
+
+
+    poseStatus.textContent =
+        "-";
+
+}
+
+
+// =========================================
+// BUTTON EVENTS
+// =========================================
+
+startButton.addEventListener(
+    "click",
+    startMonitoring
+);
+
+
+stopButton.addEventListener(
+    "click",
+    stopMonitoring
+);
+
+
+// =========================================
+// PAGE CLOSE
+// =========================================
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if (stream) {
+
+            stream
+                .getTracks()
+                .forEach(
+                    track => track.stop()
+                );
+
+        }
+
+    }
+);
+
+
+</script>
+
+
+</body>
+
+</html>

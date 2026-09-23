@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Register</title>
+
+</head>
+
+
+<body>
+
+    <h1>Đăng ký tài khoản</h1>
+
+
+    <!-- ============================================= -->
+    <!-- Flash messages -->
+    <!-- ============================================= -->
+
+    {% with messages = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <p>
+                    {{ message }}
+                </p>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- ============================================= -->
+    <!-- Register form -->
+    <!-- ============================================= -->
+
+    <form
+        method="POST"
+        action="{{ url_for('register') }}"
+        enctype="multipart/form-data"
+    >
+
+        <!-- Username -->
+
+        <div>
+
+            <label>
+                Username
+            </label>
+
+            <input
+                type="text"
+                name="username"
+                required
+            >
+
+        </div>
+
+
+        <br>
+
+
+        <!-- Password -->
+
+        <div>
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                name="password"
+                required
+            >
+
+        </div>
+
+
+        <br>
+
+
+        <!-- Face image -->
+
+        <div>
+
+            <label>
+                Ảnh khuôn mặt
+            </label>
+
+            <br>
+
+            <input
+                type="file"
+                name="face_image"
+                accept=".jpg,.jpeg,.png"
+                required
+            >
+
+        </div>
+
+
+        <br>
+
+
+
+        <button
+            type="submit"
+        >
+            Đăng ký
+        </button>
+
+    </form>
+
+</body>
+
+</html>
+
+session["user_id"] = user.id
+session["username"] = user.username
+
+return redirect(
+    url_for("home")
+)

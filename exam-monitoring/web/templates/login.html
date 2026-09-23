@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Exam Monitoring - Login</title>
+
+</head>
+
+<body>
+
+    <h1>Exam Monitoring AI</h1>
+
+    <h2>Đăng nhập</h2>
+
+    {% with messages = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% if messages %}
+
+            {% for category, message in messages %}
+
+                <p>
+                    {{ message }}
+                </p>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <form
+        method="POST"
+        action="{{ url_for('login') }}"
+    >
+
+        <div>
+
+            <label>
+                Username
+            </label>
+
+            <br>
+
+            <input
+                type="text"
+                name="username"
+                required
+            >
+
+        </div>
+
+
+        <br>
+
+
+        <div>
+
+            <label>
+                Password
+            </label>
+
+            <br>
+
+            <input
+                type="password"
+                name="password"
+                required
+            >
+
+        </div>
+
+
+        <br>
+
+
+        <button type="submit">
+            Đăng nhập
+        </button>
+
+    </form>
+
+
+    <hr>
+
+
+    <p>
+        Chưa có tài khoản?
+    </p>
+
+    <a href="{{ url_for('register') }}">
+        Đăng ký tài khoản
+    </a>
+
+</body>
+
+</html>

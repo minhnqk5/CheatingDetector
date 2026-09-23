@@ -1,0 +1,13 @@
+góc quay đầu
+phát hiện điện thoại, tài liệu
+thay đổi người thi
+rời khỏi chỗ
+trao đổi tài liệu, thông tin (nói chuyện)
+
+
+
+lấy khuôn mặt mẫu của thí sinh: khi thí sinh lần đầu nhìn thẳng vào màn hình trong 1.5s thì biến các frame mặt thành
+các bộ vector số rồi tính trung bình các bộ vector ra để biểu diễn khuôn mặt
+-> Khi xem xét việc thay đổi người thi, so sánh face distance giữa mặt của frame hiện tại với mẫu khuôn mặt ban đầu.
+
+Nếu Face distance quá lớn do thí sinh quay đầu: ko xác định đó là hành vi thay đổi người thi

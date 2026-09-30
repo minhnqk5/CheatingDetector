@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giám sát phòng thi</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1c2230; --mut:#6b7385; --line:#e3e6ec; --ok:#12a150; --bad:#d92d3a; --pri:#2454e6; }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#12151c; --card:#1a1f2b; --ink:#e8ebf2; --mut:#98a1b5; --line:#2a3142; } }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);background:var(--card)} h1{margin:0;font-size:20px}
+  main{max-width:1200px;margin:0 auto;padding:20px;display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(460px,1fr))}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  h2{margin:0 0 12px;font-size:16px}
+  button{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:9px 16px;font:inherit;cursor:pointer}
+  button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)} button:disabled{opacity:.5;cursor:default}
+  .view{margin-top:12px;background:#000;border-radius:8px;min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .view img,.view video{width:100%;display:block} .mut{color:var(--mut);font-size:13px}
+  progress{width:100%;height:10px;margin-top:10px} table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)} th{color:var(--mut);font-weight:600}
+  .tag{display:inline-block;padding:1px 8px;border-radius:99px;background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad);font-size:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<header><h1>Giám sát phòng thi – phát hiện hành vi gian lận</h1></header>
+<main>
+  <section>
+    <h2>1. Webcam trực tiếp</h2>
+    <div class="row"><button id="liveStart">Bật webcam</button><button id="liveStop" class="sec" disabled>Dừng</button></div>
+    <div class="view"><img id="liveImg" alt="" hidden><span id="liveHint" class="mut">Chưa bật</span></div>
+    <table><thead><tr><th>ID</th><th>Hành vi</th><th>Từ</th><th>Đến</th></tr></thead><tbody id="liveRows"></tbody></table>
+  </section>
+
+  <section>
+    <h2>2. Upload video toàn cảnh phòng thi</h2>
+    <div class="row"><input type="file" id="file" accept="video/*"><button id="up">Xử lý</button></div>
+    <progress id="prog" value="0" max="100" hidden></progress><div id="msg" class="mut"></div>
+    <div class="view" id="resView" hidden><video id="resVideo" controls></video></div>
+    <div class="row" id="dl" style="margin-top:10px" hidden><a id="dlEv" href="#"><button class="sec">Tải events.json</button></a></div>
+    <table id="tbl" hidden><thead><tr><th>ID</th><th>Hành vi</th><th>Từ</th><th>Đến</th><th>Kéo dài</th></tr></thead><tbody id="rows"></tbody></table>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const rowHtml = (e, dur) => `<tr><td>${e.person_id}</td><td><span class="tag">${e.behavior}</span></td><td>${e.start_timecode}</td><td>${e.end_timecode}</td>${dur?`<td>${e.duration}s</td>`:''}</tr>`;
+
+// ---- live
+let poll;
+$('liveStart').onclick = () => {
+  $('liveImg').src = '/live/feed?' + Date.now(); $('liveImg').hidden = false; $('liveHint').hidden = true;
+  $('liveStart').disabled = true; $('liveStop').disabled = false;
+  poll = setInterval(async () => {
+    const r = await (await fetch('/api/live/events')).json();
+    $('liveRows').innerHTML = r.events.map(e => rowHtml(e, false)).join('');
+  }, 2000);
+};
+$('liveImg').onerror = () => { $('liveHint').hidden = false; $('liveHint').textContent = 'Không mở được webcam (đang bận hoặc không có).'; };
+$('liveStop').onclick = async () => {
+  clearInterval(poll); $('liveImg').removeAttribute('src'); $('liveImg').hidden = true; $('liveHint').hidden = false; $('liveHint').textContent = 'Đã dừng';
+  await fetch('/api/live/stop', {method: 'POST'});
+  $('liveStart').disabled = false; $('liveStop').disabled = true;
+};
+
+// ---- upload
+$('up').onclick = async () => {
+  const f = $('file').files[0]; if (!f) { $('msg').textContent = 'Hãy chọn file video.'; return; }
+  const fd = new FormData(); fd.append('video', f);
+  $('up').disabled = true; $('msg').textContent = 'Đang tải lên...'; $('prog').hidden = false; $('prog').value = 0;
+  $('resView').hidden = $('dl').hidden = $('tbl').hidden = true;
+  const r = await fetch('/api/upload', {method: 'POST', body: fd}); const j = await r.json();
+  if (!r.ok) { $('msg').textContent = j.error; $('up').disabled = false; return; }
+  const t = setInterval(async () => {
+    const s = await (await fetch('/api/jobs/' + j.job_id)).json();
+    $('prog').value = s.progress || 0; $('msg').textContent = `Trạng thái: ${s.status} (${s.progress || 0}%)`;
+    if (s.status === 'error') { clearInterval(t); $('msg').textContent = 'Lỗi: ' + s.error; $('up').disabled = false; }
+    if (s.status === 'done') {
+      clearInterval(t); $('up').disabled = false; $('msg').textContent = `Hoàn tất – ${s.total_events} sự kiện.`;
+      $('resVideo').src = `/api/jobs/${j.job_id}/video`; $('resView').hidden = false;
+      $('dlEv').href = `/api/jobs/${j.job_id}/events?download=1`; $('dl').hidden = false;
+      const ev = await (await fetch(`/api/jobs/${j.job_id}/events`)).json();
+      $('rows').innerHTML = ev.events.map(e => rowHtml(e, true)).join(''); $('tbl').hidden = false;
+    }
+  }, 1500);
+};
+</script>
+</body>
+</html>

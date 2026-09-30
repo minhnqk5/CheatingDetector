@@ -1,0 +1,39 @@
+{
+  "source": "webcam:0",
+  "mode": "live",
+  "fps": 30.0,
+  "generated_at": "2026-09-25T16:52:03",
+  "total_events": 2,
+  "summary": {
+    "turn_left": 1,
+    "turn_right": 1
+  },
+  "events": [
+    {
+      "person_id": 1,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 13.86,
+      "end_time": 15.88,
+      "duration": 2.02,
+      "start_timecode": "00:00:13.86",
+      "end_timecode": "00:00:15.88",
+      "start_frame": 416,
+      "end_frame": 476,
+      "start_datetime": "2026-09-25T16:48:54"
+    },
+    {
+      "person_id": 1,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 25.31,
+      "end_time": 26.78,
+      "duration": 1.47,
+      "start_timecode": "00:00:25.31",
+      "end_timecode": "00:00:26.78",
+      "start_frame": 759,
+      "end_frame": 803,
+      "start_datetime": "2026-09-25T16:49:05"
+    }
+  ]
+}

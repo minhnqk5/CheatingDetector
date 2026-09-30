@@ -1,0 +1,25 @@
+{
+  "source": "webcam:0",
+  "mode": "live",
+  "fps": 30.0,
+  "generated_at": "2026-09-28T14:32:35",
+  "total_events": 1,
+  "summary": {
+    "turn_right": 1
+  },
+  "events": [
+    {
+      "person_id": 1,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 28.11,
+      "end_time": 30.69,
+      "duration": 2.58,
+      "start_timecode": "00:00:28.11",
+      "end_timecode": "00:00:30.69",
+      "start_frame": 843,
+      "end_frame": 921,
+      "start_datetime": "2026-09-28T14:32:34"
+    }
+  ]
+}

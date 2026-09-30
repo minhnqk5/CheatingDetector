@@ -1,0 +1,6 @@
+ultralytics>=8.3.0
+opencv-python>=4.8
+numpy>=1.24
+scipy>=1.10
+flask>=3.0
+imageio-ffmpeg>=0.5     # ffmpeg đi kèm để xuất video H.264 phát được trên trình duyệt

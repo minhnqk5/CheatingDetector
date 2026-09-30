@@ -1,0 +1,130 @@
+{
+  "source": "webcam:0",
+  "mode": "live",
+  "fps": 30.0,
+  "generated_at": "2026-09-25T16:12:05",
+  "total_events": 9,
+  "summary": {
+    "turn_left": 4,
+    "turn_right": 5
+  },
+  "events": [
+    {
+      "person_id": 3,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 26.53,
+      "end_time": 31.64,
+      "duration": 5.11,
+      "start_timecode": "00:00:26.53",
+      "end_timecode": "00:00:31.64",
+      "start_frame": 796,
+      "end_frame": 949,
+      "start_datetime": "2026-09-25T16:11:21"
+    },
+    {
+      "person_id": 4,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 37.28,
+      "end_time": 42.47,
+      "duration": 5.19,
+      "start_timecode": "00:00:37.28",
+      "end_timecode": "00:00:42.47",
+      "start_frame": 1118,
+      "end_frame": 1274,
+      "start_datetime": "2026-09-25T16:11:32"
+    },
+    {
+      "person_id": 4,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 43.22,
+      "end_time": 45.39,
+      "duration": 2.17,
+      "start_timecode": "00:00:43.22",
+      "end_timecode": "00:00:45.39",
+      "start_frame": 1297,
+      "end_frame": 1362,
+      "start_datetime": "2026-09-25T16:11:38"
+    },
+    {
+      "person_id": 4,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 46.14,
+      "end_time": 47.56,
+      "duration": 1.42,
+      "start_timecode": "00:00:46.14",
+      "end_timecode": "00:00:47.56",
+      "start_frame": 1384,
+      "end_frame": 1427,
+      "start_datetime": "2026-09-25T16:11:41"
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 52.75,
+      "end_time": 57.05,
+      "duration": 4.3,
+      "start_timecode": "00:00:52.75",
+      "end_timecode": "00:00:57.05",
+      "start_frame": 1582,
+      "end_frame": 1711,
+      "start_datetime": "2026-09-25T16:11:47"
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 57.75,
+      "end_time": 62.09,
+      "duration": 4.34,
+      "start_timecode": "00:00:57.75",
+      "end_timecode": "00:01:02.09",
+      "start_frame": 1732,
+      "end_frame": 1863,
+      "start_datetime": "2026-09-25T16:11:52"
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 62.83,
+      "end_time": 64.31,
+      "duration": 1.49,
+      "start_timecode": "00:01:02.83",
+      "end_timecode": "00:01:04.31",
+      "start_frame": 1885,
+      "end_frame": 1929,
+      "start_datetime": "2026-09-25T16:11:58"
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 65.02,
+      "end_time": 68.64,
+      "duration": 3.62,
+      "start_timecode": "00:01:05.02",
+      "end_timecode": "00:01:08.64",
+      "start_frame": 1950,
+      "end_frame": 2059,
+      "start_datetime": "2026-09-25T16:12:00"
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 69.45,
+      "end_time": 73.17,
+      "duration": 3.72,
+      "start_timecode": "00:01:09.45",
+      "end_timecode": "00:01:13.17",
+      "start_frame": 2084,
+      "end_frame": 2195,
+      "start_datetime": "2026-09-25T16:12:04"
+    }
+  ]
+}

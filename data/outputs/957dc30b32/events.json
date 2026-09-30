@@ -1,0 +1,49 @@
+{
+  "source": "957dc30b32_vid.mp4",
+  "mode": "video",
+  "fps": 29.97002997002997,
+  "generated_at": "2026-09-25T16:59:15",
+  "total_events": 3,
+  "summary": {
+    "turn_right": 2,
+    "turn_left": 1
+  },
+  "events": [
+    {
+      "person_id": 2,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 1.63,
+      "end_time": 6.21,
+      "duration": 4.57,
+      "start_timecode": "00:00:01.63",
+      "end_timecode": "00:00:06.21",
+      "start_frame": 49,
+      "end_frame": 186
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 2.24,
+      "end_time": 3.2,
+      "duration": 0.97,
+      "start_timecode": "00:00:02.24",
+      "end_timecode": "00:00:03.20",
+      "start_frame": 67,
+      "end_frame": 96
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 4.64,
+      "end_time": 6.01,
+      "duration": 1.37,
+      "start_timecode": "00:00:04.64",
+      "end_timecode": "00:00:06.01",
+      "start_frame": 139,
+      "end_frame": 180
+    }
+  ]
+}

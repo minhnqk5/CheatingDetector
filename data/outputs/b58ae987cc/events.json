@@ -1,0 +1,24 @@
+{
+  "source": "b58ae987cc_c35.mp4",
+  "mode": "video",
+  "fps": 30.022837885228935,
+  "generated_at": "2026-09-25T16:53:07",
+  "total_events": 1,
+  "summary": {
+    "turn_right": 1
+  },
+  "events": [
+    {
+      "person_id": 1,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 2.83,
+      "end_time": 7.76,
+      "duration": 4.93,
+      "start_timecode": "00:00:02.83",
+      "end_timecode": "00:00:07.76",
+      "start_frame": 85,
+      "end_frame": 233
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "source": "dc79ed2be1_vid.mp4",
+  "mode": "video",
+  "fps": 29.97002997002997,
+  "generated_at": "2026-09-25T16:12:53",
+  "total_events": 6,
+  "summary": {
+    "turn_left": 5,
+    "turn_right": 1
+  },
+  "events": [
+    {
+      "person_id": 1,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 0.13,
+      "end_time": 7.67,
+      "duration": 7.54,
+      "start_timecode": "00:00:00.13",
+      "end_timecode": "00:00:07.67",
+      "start_frame": 4,
+      "end_frame": 230
+    },
+    {
+      "person_id": 2,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 0.13,
+      "end_time": 0.8,
+      "duration": 0.67,
+      "start_timecode": "00:00:00.13",
+      "end_timecode": "00:00:00.80",
+      "start_frame": 4,
+      "end_frame": 24
+    },
+    {
+      "person_id": 4,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 0.13,
+      "end_time": 7.67,
+      "duration": 7.54,
+      "start_timecode": "00:00:00.13",
+      "end_timecode": "00:00:07.67",
+      "start_frame": 4,
+      "end_frame": 230
+    },
+    {
+      "person_id": 5,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 0.13,
+      "end_time": 7.67,
+      "duration": 7.54,
+      "start_timecode": "00:00:00.13",
+      "end_timecode": "00:00:07.67",
+      "start_frame": 4,
+      "end_frame": 230
+    },
+    {
+      "person_id": 2,
+      "behavior": "turn_right",
+      "status": "suspicious",
+      "start_time": 0.83,
+      "end_time": 6.21,
+      "duration": 5.37,
+      "start_timecode": "00:00:00.83",
+      "end_timecode": "00:00:06.21",
+      "start_frame": 25,
+      "end_frame": 186
+    },
+    {
+      "person_id": 2,
+      "behavior": "turn_left",
+      "status": "suspicious",
+      "start_time": 5.44,
+      "end_time": 5.61,
+      "duration": 0.17,
+      "start_timecode": "00:00:05.44",
+      "end_timecode": "00:00:05.61",
+      "start_frame": 163,
+      "end_frame": 168
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Flask>=3.1,<4
+Werkzeug>=3.1,<4
+numpy>=2.0
+opencv-python>=5.0,<6
+ultralytics>=8.4.160,<9
+torch>=2.2

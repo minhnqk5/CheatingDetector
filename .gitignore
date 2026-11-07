@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+data/uploads/
+data/evidence/
+data/exam.sqlite3
+
+models/*.pt
+models/*.onnx

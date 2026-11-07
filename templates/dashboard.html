@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ExamGuard · Phân tích video</title><link rel="stylesheet" href="/static/app.css"><script src="/static/app.js" defer></script></head>
+<body><header><div><b class="logo">EG</b><strong>ExamGuard</strong><small>Phân tích hình ảnh phòng thi</small></div><span id="connection">Đang kết nối…</span></header>
+<main><div class="intro"><div><h1>Phân tích video</h1><p>YOLO26X · AI phân tích 1/1 frame · Bật / Tắt trực tiếp</p></div><a class="button" href="/api/export">Xuất cảnh báo CSV</a></div>
+<div id="notice" role="status" aria-live="polite"></div>
+<section class="metrics"><div><small>NGƯỜI ĐƯỢC PHÁT HIỆN</small><b id="persons">—</b></div><div><small>FPS XỬ LÝ AI</small><b id="fps">—</b></div><div><small>FRAME ĐÃ PHÂN TÍCH</small><b id="samples">0</b></div><div><small>MỐC VIDEO</small><b id="media">—</b></div></section>
+<section class="panel"><div class="panelhead"><h2 id="source-title">Nguồn hình ảnh</h2><select id="view" aria-label="Chế độ xem camera" hidden><option value="live">Camera trực tiếp</option><option value="analysis">Khung phân tích AI</option></select></div>
+<div class="screen"><img id="stream" alt="Khung video"><span id="placeholder">Tải video hoặc mở camera để bắt đầu</span></div>
+<div class="source"><label class="button">Tải video<input id="upload" type="file" accept=".mp4,.avi,.mov,.mkv" hidden></label><span id="filename">Chưa chọn video</span><button id="toggle" disabled>Bật AI</button><strong id="analysis-state">Đang tắt</strong></div>
+<p id="details">Tải video để xem khung đầu tiên. Bấm Bật AI để phân tích; Tắt để tạm dừng.</p>
+<details><summary>Dùng webcam / camera IP</summary><div class="source"><select id="mode" aria-label="Loại camera"><option value="camera">Webcam USB</option><option value="ip">Camera IP / iPhone</option></select><input id="source" value="0" aria-label="Chỉ số hoặc URL camera"><button id="open">Mở camera</button></div></details>
+<p class="muted">Khung hiển thị của video cập nhật theo kết quả AI, không phải trình phát đủ mọi frame. Cảnh báo cần được kiểm tra bằng chứng.</p></section>
+<section class="panel"><div class="panelhead"><h2>Lịch sử cảnh báo</h2><button id="delete-all" class="danger" type="button">Xóa toàn bộ</button></div><p>Điện thoại, sách, laptop và hướng đầu kéo dài.</p><div id="events" class="events"></div></section>
+<footer>ExamGuard · Xử lý cục bộ · Không có đăng nhập, chỉ dùng trên máy tin cậy.</footer></main></body></html>

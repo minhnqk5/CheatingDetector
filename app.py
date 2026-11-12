@@ -105,15 +105,32 @@ def create_app(data_dir=None, start_worker=True):
         engine.source(value,mode); return jsonify(ok=True)
     @app.post('/api/upload')
     def upload():
-        f=request.files.get('video')
-        if not f or Path(f.filename).suffix.lower() not in ('.mp4','.avi','.mov','.mkv'):
+        f = request.files.get('video')
+
+        if not f or Path(f.filename).suffix.lower() not in (
+            '.mp4', '.avi', '.mov', '.mkv'
+        ):
             raise ValueError('Chọn video mp4, avi, mov hoặc mkv')
-        target=data/'uploads'/(uuid4().hex+Path(f.filename).suffix.lower())
-        target.parent.mkdir(exist_ok=True); f.save(target)
+
+        import tempfile
+        import os
+
+        suffix = Path(f.filename).suffix.lower()
+
+        # Tạo file tạm, không lưu trong data/uploads
+        fd, target = tempfile.mkstemp(suffix=suffix)
+        os.close(fd)
+
         try:
-            engine.source(str(target),'video')
+            f.save(target)
+
+            # Chuyển video cho engine xử lý
+            engine.source(target, 'video')
+
         except Exception:
-            target.unlink(missing_ok=True); raise
+            Path(target).unlink(missing_ok=True)
+            raise
+
         return jsonify(ok=True)
     @app.post('/api/settings')
     def settings():

@@ -1,0 +1,15 @@
+[33mcommit bde289d1dc886df0595fb343e45945ce42bc4390[m[33m ([m[1;32mmain[m[33m)[m
+Author: minhnqk5 <minhnqk5@gmail.com>
+Date:   Sun Nov 15 00:01:44 2026 +0700
+
+    Update 15/11
+
+ bytetrack_exam.yaml      |   2 [32m+[m[31m-[m
+ config.py                |  19 [32m++++++[m[31m--[m
+ core.py                  | 119 [32m++++++++++++++++++++++++++++++++++++++++[m[31m-------[m
+ engine.py                |  11 [32m++[m[31m---[m
+ live_capture.py          |  73 [32m+++++++++++[m[31m------------------[m
+ motion.py                |  74 [32m+++++++++++++++++++++++[m[31m------[m
+ static/app.js            |  63 [32m+++++++++++[m[31m--------------[m
+ templates/dashboard.html |   2 [32m+[m[31m-[m
+ 8 files changed, 235 insertions(+), 128 deletions(-)

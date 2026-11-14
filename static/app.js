@@ -9,19 +9,25 @@ let streamMode = '';
 let lastEvents = '';
 
 const labels = {
-    HEAD_LEFT: 'Phát hiện vi phạm',
-    HEAD_RIGHT: 'Phát hiện vi phạm',
-    HEAD_PITCH: 'Phát hiện vi phạm',
-    LOOKING_LEFT_LONG: 'Phát hiện vi phạm',
-    LOOKING_RIGHT_LONG: 'Phát hiện vi phạm',
-    LOOKING_BACK_LONG: 'Phát hiện vi phạm',
-    POSE_UNKNOWN_LONG: 'Phát hiện vi phạm',
-    PHONE: 'Phát hiện vi phạm',
-    PHONE_DETECTED: 'Phát hiện vi phạm',
-    BOOK: 'Phát hiện vi phạm',
-    BOOK_DETECTED: 'Phát hiện vi phạm',
-    LAPTOP: 'Phát hiện vi phạm',
-    LAPTOP_DETECTED: 'Phát hiện vi phạm'
+    HEAD_LEFT: 'Quay đầu',
+    HEAD_RIGHT: 'Quay đầu',
+    HEAD_UP: 'Ngẩng đầu',
+    HEAD_PITCH: 'Góc đầu bất thường',
+    LOOKING_LEFT_LONG: 'Quay đầu',
+    LOOKING_RIGHT_LONG: 'Quay đầu',
+    LOOKING_UP_LONG: 'Ngẩng đầu kéo dài',
+    LOOKING_BACK_LONG: 'Quay đầu',
+    POSE_UNKNOWN_LONG: 'Quay đầu',
+    LEFT_INITIAL_POSITION: 'Di chuyển khỏi vị trí ban đầu',
+    LEFT_POSITION: 'Rời khỏi vị trí',
+    BODY_TURN: 'Xoay người',
+    BODY_LEAN: 'Nghiêng / ngả người',
+    PHONE: 'Phát hiện điện thoại',
+    PHONE_DETECTED: 'Phát hiện điện thoại',
+    BOOK: 'Phát hiện sách',
+    BOOK_DETECTED: 'Phát hiện sách',
+    LAPTOP: 'Phát hiện laptop',
+    LAPTOP_DETECTED: 'Phát hiện laptop'
 };
 
 function node(tag, text, cls) {
@@ -276,14 +282,10 @@ function renderEvents(events) {
     for (const e of visible) {
         const card = node('article', undefined, 'event');
 
-        card.append(
-            node('b', labels[e.type]),
-
-            node(
-                'small',
-                new Date(e.created).toLocaleString('vi-VN')
-            )
-        );
+        card.append(node(
+            'small',
+            new Date(e.created).toLocaleString('vi-VN')
+        ));
 
         if (e.image) {
             const a = node('a');
@@ -298,28 +300,15 @@ function renderEvents(events) {
 
             img.src = a.href;
             img.loading = 'lazy';
-            img.alt = 'Bằng chứng cảnh báo';
+            img.alt = 'Ảnh log';
 
             a.append(img);
             card.append(a);
         }
 
-        if (e.media_time != null) {
-            card.append(
-                node(
-                    'small',
-                    'Video: ' + e.media_time.toFixed(2) + ' s'
-                )
-            );
+        if (e.type === 'LEFT_POSITION' && e.payload?.reason === 'left_frame') {
+            card.append(node('b', `ID ${e.subject} đã rời khỏi khung hình`));
         }
-
-        card.append(
-            node(
-                'p',
-                e.payload?.description ||
-                ('Duy trì ' + (e.payload?.duration ?? 0) + ' giây')
-            )
-        );
 
         const del = node('button', 'Xóa');
 

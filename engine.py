@@ -46,7 +46,7 @@ class Engine:
         if self.monitor is not None:
             from core import Pose
             m = self.monitor; m.pose = Pose(); m.track_history.clear(); m.cache.clear(); m.lastrec.clear(); m.events.clear()
-            m.last_tracks = []; m.objects = []; m.frame_count = 0; m._event_times.clear()
+            m.last_tracks = []; m.objects = []; m.frame_count = 0; m._event_times.clear(); m.positions.reset()
             for tracker in getattr(getattr(m.model, 'predictor', None), 'trackers', []): tracker.reset()
 
     @staticmethod
@@ -105,8 +105,7 @@ class Engine:
                 self.camera = LatestCamera(cap,
                     preview_fps=max(1, min(60, int(os.environ.get('PREVIEW_FPS', '30')))),
                     preview_width=max(320, int(os.environ.get('PREVIEW_WIDTH', '960'))),
-                    jpeg_quality=int(os.environ.get('PREVIEW_JPEG_QUALITY', '70')),
-                    overlay_max_age=max(.1, float(os.environ.get('OVERLAY_MAX_AGE', '0.7'))))
+                    jpeg_quality=int(os.environ.get('PREVIEW_JPEG_QUALITY', '70')))
             with self.state_lock:
                 self.jpg = preview
                 self.status = dict(ready=True, error='', persons=0, ai_fps=0, tracks=[], mode=mode, timings={})
@@ -231,12 +230,8 @@ class Engine:
                     for track in tracks:
                         track['alert_confirmed'] = track['track_id'] in self.rules.alerted_tracks
                     if self.camera:
-                        self.camera.set_overlay(tracks, self.monitor.objects, self.media, frame.shape)
+                        self.camera.set_overlay(tracks, self.monitor.objects, frame.shape)
                     output = self.monitor.draw(frame.copy(), tracks)
-                    if self.mode == 'video':
-                        import cv2
-                        cv2.putText(output, f'Video {self.media:.2f}s | Frame {self.frame_no}',
-                                    (10, 100), cv2.FONT_HERSHEY_SIMPLEX, .65, (0, 255, 255), 2)
                     jpg = self.encode(output) if not self.camera else None
                     if events:
                         name = uuid4().hex + '.jpg'

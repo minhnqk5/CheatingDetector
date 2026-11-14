@@ -3,38 +3,82 @@ import math
 import numpy as np
 
 
+def person_behavior_labels(person):
+    head_labels = {
+        'LEFT': 'QUAY ĐẦU',
+        'RIGHT': 'QUAY ĐẦU',
+        'UP': 'QUAY ĐẦU',
+        'BACK': 'QUAY ĐẦU',
+        'POSE_UNKNOWN': 'QUAY ĐẦU',
+        'PENDING': 'QUAY ĐẦU'
+    }
+    labels = []
+    direction = person.get('direction')
+    head_label = head_labels.get(direction)
+    if head_label:
+        labels.append(head_label)
+    if person.get('left_initial_position') or person.get('position_status') == 'MOVED':
+        labels.append('RỜI VỊ TRÍ')
+    body_label = {
+        'BODY_TURN': 'XOAY NGƯỜI',
+        'BODY_LEAN': 'NGHIÊNG / NGẢ NGƯỜI'
+    }.get(person.get('body_action'))
+    if body_label:
+        labels.append(body_label)
+    return labels
+
+
+def draw_person_labels(frame, person, x, y, color):
+    import cv2
+
+    labels = [f"ID {person.get('track_id', '?')}"] + person_behavior_labels(person)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    scale = .43
+    line_height = 18
+    frame_height, frame_width = frame.shape[:2]
+    top = y - line_height * len(labels)
+    if top < 0:
+        top = y + line_height
+
+    for index, label in enumerate(labels):
+        baseline = top + (index + 1) * line_height
+        (text_width, text_height), _ = cv2.getTextSize(label, font, scale, 1)
+        left = max(0, min(x, frame_width - text_width - 6))
+        baseline = min(baseline, frame_height - 2)
+        cv2.rectangle(frame, (left, baseline - text_height - 4),
+                      (left + text_width + 6, baseline + 3), color, -1)
+        cv2.putText(frame, label, (left + 3, baseline), font, scale, (255, 255, 255), 1)
+
+
 def person_visual(person, mode='camera'):
     head = person.get('direction', 'POSE_UNKNOWN')
     reasons = []
 
-    # Tùy chỉnh theo mode: Nếu chạy video thì bỏ qua POSE_UNKNOWN để không tô khung đỏ khi cúi viết bài
-    if mode == 'video':
-        valid_head_reasons = ('LEFT', 'RIGHT', 'UP', 'BACK', 'PENDING')
-    else:
-        valid_head_reasons = ('LEFT', 'RIGHT', 'UP', 'BACK', 'PENDING')
-
-    if head in valid_head_reasons:
+    if head in ('LEFT', 'RIGHT', 'UP', 'BACK', 'PENDING', 'POSE_UNKNOWN'):
         reasons.append('HEAD_' + head)
 
     if person.get('left_initial_position'):
         reasons.append('LEFT_INITIAL_POSITION')
 
+    if person.get('position_status') == 'MOVED':
+        reasons.append('LEFT_POSITION')
+
     if person.get('body_action'):
         reasons.append(person['body_action'])
 
     labels = {
-        'LEFT': 'QUAY ĐẦU TRÁI',
-        'RIGHT': 'QUAY ĐẦU PHẢI',
-        'UP': 'NGỬA ĐẦU',
-        'BACK': 'QUAY ĐẰNG SAU',
+        'LEFT': 'QUAY ĐẦU',
+        'RIGHT': 'QUAY ĐẦU',
+        'UP': 'QUAY ĐẦU',
+        'BACK': 'QUAY ĐẦU',
         'CENTER': 'NHÌN THẲNG',
-        'PENDING': 'ĐANG XÁC NHẬN',
-        'POSE_UNKNOWN': 'CHƯA XÁC ĐỊNH HƯỚNG'
+        'PENDING': 'QUAY ĐẦU',
+        'POSE_UNKNOWN': 'QUAY ĐẦU'
     }
 
     body = (
         'RỜI KHỎI VỊ TRÍ'
-        if person.get('left_initial_position')
+        if person.get('left_initial_position') or person.get('position_status') == 'MOVED'
         else {
             'BODY_TURN': 'XOAY NGƯỜI',
             'BODY_LEAN': 'NGHIÊNG / NGẢ NGƯỜI'

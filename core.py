@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from config import *
-from motion import Motion, person_visual
+from motion import Motion, draw_person_labels, person_visual
 
 
 def associate_faces(boxes, faces):
@@ -45,7 +45,7 @@ def match_pose_people(person_boxes, pose_boxes):
 
 
 def head_observation(points, min_conf=.45, threshold=.22, sign=1.):
-    """Heuristic 2D cues with BACK (turned around / facing away) detection."""
+    """Conservatively infer head orientation; insufficient face landmarks remain unknown."""
     result = dict(raw_direction='POSE_UNKNOWN', turn_ratio=None,
                   head_method='none', head_reason='NO_POSE_MATCH', head_confidence=0.0)
     points = np.asarray(points, dtype=float)
@@ -68,6 +68,9 @@ def head_observation(points, min_conf=.45, threshold=.22, sign=1.):
         return dict(raw_direction=direction, turn_ratio=ratio, head_method=method,
                     head_reason='OK', head_confidence=conf)
 
+    if not valid(0):
+        return reject('INSUFFICIENT_FACE_LANDMARKS')
+
     # 1. Phát hiện xoay lưng (Vai trái nằm bên trái vai phải trong ảnh)
     if valid(5) and valid(6):
         ls, rs = points[5, :2], points[6, :2]
@@ -76,15 +79,7 @@ def head_observation(points, min_conf=.45, threshold=.22, sign=1.):
             if ls[0] < rs[0]:
                 return accept(1.5, 'shoulder_inversion_back', (5, 6), direction='BACK')
 
-    # 2. Phát hiện mất dấu mũi khi ngoái/quay đầu ra sau
-    if not valid(0):
-        if valid(5) and valid(6):
-            return accept(1.2, 'nose_hidden_shoulders_visible', (5, 6), direction='BACK')
-        if valid(3) or valid(4):
-            return accept(1.2, 'nose_hidden_ear_visible', [k for k in (3, 4) if valid(k)], direction='BACK')
-        return reject('LOW_NOSE_CONF')
-
-    # 3. Phân tích hướng ngẩng đầu (UP)
+    # 2. Phân tích hướng ngẩng đầu (UP)
     if all(valid(k) for k in (0, 1, 2, 3, 4)):
         ears = points[[3, 4], :2]; eyes = points[[1, 2], :2]
         ear_span = float(np.linalg.norm(ears[0] - ears[1]))
@@ -94,7 +89,7 @@ def head_observation(points, min_conf=.45, threshold=.22, sign=1.):
                 return dict(raw_direction='UP', turn_ratio=None, head_method='raised_nose_eyes_ears',
                             head_reason='UP_CUE', head_confidence=float(min(points[k, 2] for k in (0, 1, 2, 3, 4))))
 
-    # 4. Phân tích nghiêng mặt (Single side profile)
+    # 3. Phân tích nghiêng mặt (Single side profile)
     profile = None
     if valid(5) and valid(6):
         sa, sb = points[[5, 6], :2]
@@ -422,6 +417,82 @@ class Pose:
                     del store[track_id]
 
 
+class PositionTracker:
+    """Lưu vị trí gốc (tâm bbox) của từng track và phát hiện rời chỗ.
+
+    - moved:      tâm bbox lệch khỏi vị trí gốc quá ngưỡng (sau thời gian hiệu chỉnh).
+    - left_frame: track biến mất khỏi khung hình quá POSITION_MISSING_SECONDS.
+    """
+
+    def __init__(self):
+        self.entries = {}
+
+    def reset(self):
+        self.entries.clear()
+
+    @staticmethod
+    def _empty(status='UNKNOWN'):
+        return {'position_status': status, 'position_distance': 0.0, 'position_limit': 0.0,
+                'position_alert': False, 'position_reason': None}
+
+    def update(self, track_id, bbox, now):
+        if track_id is None or track_id < 0:
+            return self._empty()
+        x1, y1, x2, y2 = bbox
+        cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+        width, height = max(float(x2 - x1), 1.0), max(float(y2 - y1), 1.0)
+        now = float(now)
+        entry = self.entries.get(track_id)
+        if entry is None:
+            self.entries[track_id] = {'anchor': (cx, cy), 'height': height, 'width': width,
+                                      'created': now, 'last_seen': now,
+                                      'event_sent': False, 'reason': None}
+            return self._empty('CALIBRATING')
+        # Video bị tua lùi / timestamp reset
+        if now < entry['last_seen'] - 1.0:
+            entry.update(anchor=(cx, cy), created=now, height=height, width=width,
+                         event_sent=False, reason=None)
+        entry['last_seen'] = now
+        if now - entry['created'] <= POSITION_CALIBRATION_SECONDS:
+            a = float(POSITION_CALIBRATION_ALPHA)
+            ox, oy = entry['anchor']
+            entry['anchor'] = (a * cx + (1 - a) * ox, a * cy + (1 - a) * oy)
+            entry['height'] = a * height + (1 - a) * entry['height']
+            entry['width'] = a * width + (1 - a) * entry['width']
+            return self._empty('CALIBRATING')
+        ax, ay = entry['anchor']
+        distance = float(np.hypot(cx - ax, cy - ay))
+        limit = max(float(POSITION_MIN_MOVE_PIXELS), entry['height'] * float(POSITION_MOVE_RATIO))
+        moved = distance > limit
+        # Quay lại gần vị trí cũ -> cho phép cảnh báo lần sau
+        if entry['event_sent'] and distance < limit * 0.5:
+            entry['event_sent'] = False
+            entry['reason'] = None
+        alert = bool(moved and not entry['event_sent'])
+        if alert:
+            entry['event_sent'] = True
+            entry['reason'] = 'moved'
+        return {'position_status': 'MOVED' if moved else 'SAVED', 'position_distance': distance,
+                'position_limit': float(limit), 'position_alert': alert,
+                'position_reason': entry['reason']}
+
+    def missing(self, now):
+        result = []
+        now = float(now)
+        for track_id, entry in self.entries.items():
+            if entry['event_sent']:
+                continue
+            # Chỉ tính khi đã theo dõi đủ lâu (tránh báo từ detection nhiễu)
+            if entry['last_seen'] - entry['created'] < POSITION_CALIBRATION_SECONDS:
+                continue
+            if now - entry['last_seen'] < POSITION_MISSING_SECONDS:
+                continue
+            entry['event_sent'] = True
+            entry['reason'] = 'left_frame'
+            result.append({'track_id': int(track_id), 'anchor': entry['anchor'], 'reason': 'left_frame'})
+        return result
+
+
 class Monitor:
 
     def __init__(self, db):
@@ -437,6 +508,7 @@ class Monitor:
         self.faces = Faces() if HEAD_BACKEND == 'yunet' else None
         self.head_model = YOLO(str(POSE_MODEL_PATH)) if HEAD_BACKEND == 'pose' else None
         self.pose = Pose()
+        self.positions = PositionTracker()
         self.cache = {}
         self.lastrec = {}
         self.events = []
@@ -478,6 +550,7 @@ class Monitor:
 
     def process(self, frame, media_time=None, mode='camera'):
         self.mode = mode  # Lưu lại mode để hàm draw sử dụng
+        clock = float(media_time) if media_time is not None else time.monotonic()
         if frame is None:
             return self.last_tracks
         now = time.perf_counter()
@@ -503,6 +576,7 @@ class Monitor:
             raise RuntimeError("YOLO returned no result")
         result = results[0]
         if result.boxes is None:
+            self._log_missing(clock, media_time)
             self.pose.remove_lost([])
             self.track_history.clear()
             self.motion.retain([])
@@ -599,11 +673,14 @@ class Monitor:
             item.update(self.motion.update(track_id, pose_rows.get(person_index, []), bbox, timestamp, reset=motion_reset))
             duration, long_event, should_log_event = self.pose.temporal_update(track_id, direction, media_time, mode=mode)
             item.update({'direction': direction, 'duration': float(duration), 'long_event': bool(long_event)})
+            position = self.positions.update(track_id, bbox, timestamp) if POSITION_ENABLED else {}
+            item.update(position)
 
             red_persons_count = sum(
                 1 for p in tracks + [item]
                 if p.get('direction') in ('LEFT', 'RIGHT', 'UP', 'BACK', 'PENDING')
                 or p.get('left_initial_position')
+                or p.get('position_status') == 'MOVED'
                 or p.get('body_action')
             )
 
@@ -613,8 +690,12 @@ class Monitor:
                 else:
                     event_type = f'LOOKING_{direction}_LONG'
                 self._event(event_type, item, media_time=media_time, duration=round(duration, 2), direction=direction, red_count=red_persons_count)
+            if position.get('position_alert'):
+                self._event('LEFT_POSITION', item, media_time=media_time, reason='moved',
+                            distance=round(float(position['position_distance']), 1), red_count=red_persons_count)
             tracks.append(item)
         face_done = time.perf_counter()
+        self._log_missing(clock, media_time)
         self.pose.remove_lost(active_ids)
         self.motion.retain(active_ids)
         for lost_id in prior_ids - set(active_ids): self.track_history.pop(lost_id, None)
@@ -650,6 +731,7 @@ class Monitor:
                 1 for p in tracks
                 if p.get('direction') in ('LEFT', 'RIGHT', 'UP', 'BACK', 'PENDING')
                 or p.get('left_initial_position')
+                or p.get('position_status') == 'MOVED'
                 or p.get('body_action')
             ) + len(objects)
 
@@ -666,6 +748,14 @@ class Monitor:
             else:
                 self.ai_fps = self.ai_fps * 0.8 + current_ai_fps * 0.2
         return self.last_tracks
+
+    def _log_missing(self, clock, media_time=None):
+        if not POSITION_ENABLED:
+            return
+        for entry in self.positions.missing(clock):
+            obj = {'track_id': entry['track_id'], 'student_id': None, 'seat': None,
+                   'name': 'Chưa nhận diện'}
+            self._event('LEFT_POSITION', obj, media_time=media_time, reason='left_frame')
 
     def _event(self, event_type, obj, media_time=None, red_count=1, **extra):
             now = time.time()
@@ -716,14 +806,11 @@ class Monitor:
             # Truyền thêm mode=self.mode vào person_visual để đồng bộ trạng thái màu vẽ
             color, head_label, body_label = person_visual(person, mode=self.mode)
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(frame, f"ID {person['track_id']}", (x1, max(20, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+            draw_person_labels(frame, person, x1, y1, color)
         for obj in self.objects:
             x1, y1, x2, y2 = map(int, obj['bbox'])
             color = (0, 0, 255)
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             label = f"{obj['class_name']} {obj['confidence']:.2f}"
             cv2.putText(frame, label, (x1, max(20, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, .5, color, 1)
-        cv2.putText(frame, f'Worker FPS: {self.fps:.1f}', (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
-        cv2.putText(frame, f'AI FPS: {self.ai_fps:.1f}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
-        cv2.putText(frame, f'AI: 1/{PROCESS_EVERY_N_FRAMES} frames', (10, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
         return frame

@@ -3,16 +3,15 @@ import copy
 import threading
 import time
 import cv2
-from motion import person_visual
+from motion import draw_person_labels, person_visual
 
 
 class LatestCamera:
-    def __init__(self, cap, preview_fps=30, preview_width=960, jpeg_quality=70, overlay_max_age=1.5):
+    def __init__(self, cap, preview_fps=30, preview_width=960, jpeg_quality=70):
         self.cap = cap
         self.preview_fps = preview_fps
         self.preview_width = preview_width
         self.jpeg_quality = max(40, min(95, int(jpeg_quality)))
-        self.overlay_max_age = overlay_max_age
         self.overlay = None
         self.overlay_version = 0
         self.analysis_jpg = None
@@ -99,10 +98,8 @@ class LatestCamera:
         finally:
             self.cap.release()
 
-    def set_overlay(self, tracks, objects, captured, shape):
-        # Phần tử thứ 5 là thời điểm kết quả AI sẵn sàng: hạn sử dụng tính từ đây,
-        # không tính từ lúc chụp frame (inference chậm sẽ làm box hết hạn ngay).
-        value = copy.deepcopy((tracks, objects, captured, shape)) + (time.monotonic(),)
+    def set_overlay(self, tracks, objects, shape):
+        value = copy.deepcopy((tracks, objects, shape))
         with self.changed:
             self.overlay = value
             self.overlay_version += 1
@@ -116,45 +113,29 @@ class LatestCamera:
 
     def render_overlay(self, frame, overlay):
         output = frame.copy()
-        tracks, objects, captured, shape, set_at = overlay
-        now = time.monotonic()
-        age = max(0, now - captured)
-        fresh = (now - set_at) <= self.overlay_max_age
-        if fresh:
-            sx = output.shape[1] / shape[1]
-            sy = output.shape[0] / shape[0]
-            for person in tracks:
-                x1, y1, x2, y2 = person['bbox']
-                a, b, c, d = int(x1 * sx), int(y1 * sy), int(x2 * sx), int(y2 * sy)
-                color, head_label, body_label = person_visual(person)
-                cv2.rectangle(output, (a, b), (c, d), color, 2)
-                cv2.putText(
-                    output,
-                    f"ID {person['track_id']}",
-                    (a, max(16, b - 5)),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    .45,
-                    color,
-                    1
-                )
-            for obj in objects:
-                x1, y1, x2, y2 = obj['bbox']
-                a, b, c, d = int(x1 * sx), int(y1 * sy), int(x2 * sx), int(y2 * sy)
-                color = (0, 0, 255)
-                cv2.rectangle(output, (a, b), (c, d), color, 1)
-                cv2.putText(
-                    output,
-                    f"{obj['class_name']} {obj['confidence']:.2f}",
-                    (a, max(16, b - 4)),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    .45,
-                    color,
-                    1
-                )
-        text = f'LIVE | AI result age: {age:.1f}s'
-        if not fresh:
-            text += ' | waiting for fresh boxes'
-        cv2.putText(output, text, (10, 22), cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 255, 255), 1)
+        tracks, objects, shape = overlay
+        sx = output.shape[1] / shape[1]
+        sy = output.shape[0] / shape[0]
+        for person in tracks:
+            x1, y1, x2, y2 = person['bbox']
+            a, b, c, d = int(x1 * sx), int(y1 * sy), int(x2 * sx), int(y2 * sy)
+            color, head_label, body_label = person_visual(person)
+            cv2.rectangle(output, (a, b), (c, d), color, 2)
+            draw_person_labels(output, person, a, b, color)
+        for obj in objects:
+            x1, y1, x2, y2 = obj['bbox']
+            a, b, c, d = int(x1 * sx), int(y1 * sy), int(x2 * sx), int(y2 * sy)
+            color = (0, 0, 255)
+            cv2.rectangle(output, (a, b), (c, d), color, 1)
+            cv2.putText(
+                output,
+                f"{obj['class_name']} {obj['confidence']:.2f}",
+                (a, max(16, b - 4)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                .45,
+                color,
+                1
+            )
         return output
 
     def encode(self):

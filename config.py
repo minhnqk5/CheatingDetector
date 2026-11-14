@@ -20,7 +20,7 @@ HALF = CUDA_AVAILABLE
 PROCESS_EVERY_N_FRAMES = 1
 IMG_SIZE = int(os.environ.get('AI_IMAGE_SIZE', '640'))
 CONFIDENCE = 0.10
-OBJECT_CONFIDENCE = float(os.environ.get("OBJECT_CONFIDENCE", "0.45"))
+OBJECT_CONFIDENCE = float(os.environ.get("OBJECT_CONFIDENCE", "0.25"))
 FACE_MAX_SIZE = int(os.environ.get("FACE_MAX_SIZE", "1920"))
 TRACKER_PATH = str(BASE_DIR / "bytetrack_exam.yaml")
 IOU = 0.45
@@ -28,8 +28,8 @@ DETECTION_CLASSES = [0, 63, 67, 73]
 LOOKING_AWAY_SECONDS = 1.0
 
 HEAD_YAW_SIGN = -1.0 if os.environ.get('HEAD_YAW_SIGN', '1').strip() == '-1' else 1.0
-HEAD_YAW_THRESHOLD = 20.0
-HEAD_YAW_CENTER_THRESHOLD = 20.0
+HEAD_YAW_THRESHOLD = 25.0
+HEAD_YAW_CENTER_THRESHOLD = 25.0
 HEAD_YAW_MAX_ABS_PITCH = 50.0  # Nới rộng góc cúi để không báo nhầm khi viết bài
 HEAD_PITCH_THRESHOLD = 15.0
 HEAD_YAW_SMOOTH_ALPHA = 0.35
@@ -50,3 +50,14 @@ POSE_CROP_RETRY = os.environ.get('POSE_CROP_RETRY', '1') == '1'
 POSE_CROP_SIZE = int(os.environ.get('POSE_CROP_SIZE', '640'))
 POSE_DEBUG = os.environ.get('POSE_DEBUG', '1') == '1'
 HEAD_STATE_MAX_GAP = 1.5
+
+# ---- Rời khỏi vị trí (PositionTracker) ----
+# Mỗi người được lưu một vị trí gốc (tâm bbox). Sau thời gian hiệu chỉnh, nếu tâm bbox
+# lệch quá ngưỡng thì ghi LEFT_POSITION (reason=moved); nếu biến mất khỏi khung hình
+# quá POSITION_MISSING_SECONDS thì ghi LEFT_POSITION (reason=left_frame).
+POSITION_ENABLED = os.environ.get('POSITION_ENABLED', '1') == '1'
+POSITION_CALIBRATION_SECONDS = float(os.environ.get('POSITION_CALIBRATION_SECONDS', '2.0'))
+POSITION_CALIBRATION_ALPHA = 0.25
+POSITION_MOVE_RATIO = float(os.environ.get('POSITION_MOVE_RATIO', '0.30'))   # x chiều cao bbox
+POSITION_MIN_MOVE_PIXELS = float(os.environ.get('POSITION_MIN_MOVE_PIXELS', '60'))
+POSITION_MISSING_SECONDS = float(os.environ.get('POSITION_MISSING_SECONDS', '2.0'))
